@@ -40,7 +40,8 @@ PRIVATE_NETWORKS = [
 IPV4 = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d|\.\d)(?:/(\d{1,2}))?")
 EMAIL = re.compile(r"[A-Za-z0-9._%+\-\[\]]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 
-ALLOWED_EMAILS = {"noreply@anthropic.com", "noreply@github.com"}
+# Public GitHub and Anthropic addresses used in bot and co-author trailers.
+ALLOWED_EMAILS = {"noreply@anthropic.com", "noreply@github.com", "support@github.com"}
 ALLOWED_EMAIL_SUFFIXES = (
     "@users.noreply.github.com",
     # RFC 2606 reserved names.

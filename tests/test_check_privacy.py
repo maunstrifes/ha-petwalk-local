@@ -98,12 +98,14 @@ def test_email_address_is_reported(address: str) -> None:
         "1200404+someone@users.noreply.github.com",
         "noreply@anthropic.com",
         "noreply@github.com",
+        # Dependabot's Signed-off-by trailer.
+        "support@github.com",
         "user@example.com",
         "admin@petwalk.example.org",
     ],
 )
 def test_allowed_email_addresses_pass(address: str) -> None:
-    """GitHub noreply, the co-author trailer and RFC 2606 domains are fine."""
+    """GitHub noreply and bot trailers, the co-author trailer and RFC 2606 domains."""
     assert check_privacy.find_problems(f"by {address}") == []
 
 
