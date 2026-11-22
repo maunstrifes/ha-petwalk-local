@@ -48,6 +48,11 @@ explicit_package_bases = true
 module = "tests.*"
 disallow_untyped_decorators = false
 
+# The test harness ships no type information.
+[[tool.mypy.overrides]]
+module = "pytest_homeassistant_custom_component.*"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
