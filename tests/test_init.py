@@ -41,8 +41,8 @@ async def test_setup_creates_one_device_with_all_entities(
     """One door, one device, seven entities with stable unique IDs."""
     assert loaded_entry.state is ConfigEntryState.LOADED
 
-    device = device_registry.async_get_device({(DOMAIN, loaded_entry.entry_id)})
-    assert device is not None
+    [device] = dr.async_entries_for_config_entry(device_registry, loaded_entry.entry_id)
+    assert device.identifiers == {(DOMAIN, loaded_entry.entry_id)}
     assert (device.manufacturer, device.model) == ("petWALK", "petWALK.control")
 
     entries = er.async_entries_for_config_entry(entity_registry, loaded_entry.entry_id)
