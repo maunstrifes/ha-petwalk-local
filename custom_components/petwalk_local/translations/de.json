@@ -1,0 +1,74 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "petWALK-Tür",
+        "description": "Zuerst die REST API freischalten: petWALK-App → deine Tür → Erweiterte Einstellungen → REST API. Nach einem Firmware-Update muss sie unter Umständen erneut freigeschaltet werden.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "IP-Adresse oder Hostname der Tür, wie sie die petWALK-App bei der REST-API-Einstellung anzeigt.",
+          "port": "Port der lokalen API. Nur ändern, wenn die Tür einen anderen verwendet."
+        }
+      },
+      "reconfigure": {
+        "title": "Adresse der Tür ändern",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "IP-Adresse oder Hostname der Tür.",
+          "port": "Port der lokalen API."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Die Tür antwortet nicht. Bitte Adresse prüfen und ob die REST API in der petWALK-App freigeschaltet ist.",
+      "invalid_auth": "Die Tür hat die Anfrage abgelehnt. Diese Firmware verlangt womöglich eine Anmeldung, die diese Integration noch nicht unterstützt.",
+      "invalid_response": "Die Tür antwortet, aber nicht so, wie es die lokale petWALK-API dokumentiert. Bitte ein Issue mit der Firmware-Version eröffnen.",
+      "unknown": "Unerwarteter Fehler, siehe Home-Assistant-Log."
+    },
+    "abort": {
+      "already_configured": "Diese Tür ist bereits eingerichtet.",
+      "reconfigure_successful": "Die Adresse wurde geändert."
+    }
+  },
+  "entity": {
+    "cover": {
+      "door": {
+        "name": "Tür"
+      }
+    },
+    "switch": {
+      "system": {
+        "name": "System"
+      },
+      "brightness_sensor": {
+        "name": "Helligkeitssensor"
+      },
+      "motion_in": {
+        "name": "Bewegung rein"
+      },
+      "motion_out": {
+        "name": "Bewegung raus"
+      },
+      "rfid": {
+        "name": "RFID"
+      },
+      "time_schedule": {
+        "name": "Zeitsteuerung"
+      }
+    }
+  },
+  "exceptions": {
+    "update_failed": {
+      "message": "Zustand der Tür konnte nicht gelesen werden: {error}"
+    },
+    "command_failed": {
+      "message": "Die Tür hat den Befehl nicht angenommen: {error}"
+    }
+  }
+}
