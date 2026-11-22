@@ -1,0 +1,27 @@
+{
+  "entity": {
+    "switch": {
+      "system": {
+        "default": "mdi:power"
+      },
+      "brightness_sensor": {
+        "default": "mdi:theme-light-dark"
+      },
+      "motion_in": {
+        "default": "mdi:location-enter"
+      },
+      "motion_out": {
+        "default": "mdi:location-exit"
+      },
+      "rfid": {
+        "default": "mdi:nfc-variant",
+        "state": {
+          "off": "mdi:nfc-variant-off"
+        }
+      },
+      "time_schedule": {
+        "default": "mdi:clock-outline"
+      }
+    }
+  }
+}

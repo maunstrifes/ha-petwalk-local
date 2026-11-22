@@ -1,0 +1,75 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "petWALK door",
+        "description": "Enable the REST API first: petWALK app → your door → Advanced settings → REST API. After a firmware update it may have to be enabled again.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "IP address or host name of the door, as shown in the petWALK app next to the REST API setting.",
+          "port": "Port of the local API. Only change it if you know the door uses another one."
+        }
+      },
+      "reconfigure": {
+        "title": "Change the door's address",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "IP address or host name of the door.",
+          "port": "Port of the local API."
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "Enter only the IP address or host name, without http://, port or path.",
+      "cannot_connect": "The door did not answer. Check the address and that the REST API is enabled in the petWALK app.",
+      "invalid_auth": "The door rejected the request. This firmware may require authentication, which this integration does not support yet.",
+      "invalid_response": "The door answered, but not as the petWALK local API documents. Please open an issue with your firmware version.",
+      "unknown": "Unexpected error, see the Home Assistant log."
+    },
+    "abort": {
+      "already_configured": "This door is already set up.",
+      "reconfigure_successful": "The address was updated."
+    }
+  },
+  "entity": {
+    "cover": {
+      "door": {
+        "name": "Door"
+      }
+    },
+    "switch": {
+      "system": {
+        "name": "System"
+      },
+      "brightness_sensor": {
+        "name": "Brightness sensor"
+      },
+      "motion_in": {
+        "name": "Motion in"
+      },
+      "motion_out": {
+        "name": "Motion out"
+      },
+      "rfid": {
+        "name": "RFID"
+      },
+      "time_schedule": {
+        "name": "Time schedule"
+      }
+    }
+  },
+  "exceptions": {
+    "update_failed": {
+      "message": "Could not read the door's state: {error}"
+    },
+    "command_failed": {
+      "message": "The door did not accept the command: {error}"
+    }
+  }
+}

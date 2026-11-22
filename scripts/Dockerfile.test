@@ -1,0 +1,12 @@
+# Test image for local development. Home Assistant does not run on Windows, so the
+# check suite runs here. CI does not use this image; it installs the same requirements.
+FROM python:3.14
+
+RUN git config --system --add safe.directory '*'
+
+COPY requirements_test.txt /tmp/requirements_test.txt
+RUN pip install --no-cache-dir uv \
+    && uv pip install --system --no-cache -r /tmp/requirements_test.txt
+
+ENV PYTHONDONTWRITEBYTECODE=1
+WORKDIR /src
