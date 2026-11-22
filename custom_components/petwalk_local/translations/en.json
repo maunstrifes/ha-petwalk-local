@@ -26,6 +26,7 @@
       }
     },
     "error": {
+      "invalid_host": "Enter only the IP address or host name, without http://, port or path.",
       "cannot_connect": "The door did not answer. Check the address and that the REST API is enabled in the petWALK app.",
       "invalid_auth": "The door rejected the request. This firmware may require authentication, which this integration does not support yet.",
       "invalid_response": "The door answered, but not as the petWALK local API documents. Please open an issue with your firmware version.",

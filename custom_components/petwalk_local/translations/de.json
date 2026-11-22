@@ -26,6 +26,7 @@
       }
     },
     "error": {
+      "invalid_host": "Nur IP-Adresse oder Hostnamen eingeben, ohne http://, Port oder Pfad.",
       "cannot_connect": "Die Tür antwortet nicht. Bitte Adresse prüfen und ob die REST API in der petWALK-App freigeschaltet ist.",
       "invalid_auth": "Die Tür hat die Anfrage abgelehnt. Diese Firmware verlangt womöglich eine Anmeldung, die diese Integration noch nicht unterstützt.",
       "invalid_response": "Die Tür antwortet, aber nicht so, wie es die lokale petWALK-API dokumentiert. Bitte ein Issue mit der Firmware-Version eröffnen.",

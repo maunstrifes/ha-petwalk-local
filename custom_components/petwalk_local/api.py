@@ -16,12 +16,15 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Final
 
 from aiohttp import ClientError, ClientResponse, ClientSession, ClientTimeout
 from yarl import URL
 
 from .const import DEFAULT_PORT, REQUEST_TIMEOUT
+
+_LOGGER = logging.getLogger(__package__)
 
 MODES: Final = ("brightnessSensor", "motion_in", "motion_out", "rfid", "time")
 
@@ -59,12 +62,6 @@ class PetwalkData:
     raw: Mapping[str, Any] = field(default_factory=dict, compare=True)
 
 
-def _parse_flag(value: Any, mapping: Mapping[str, bool]) -> bool | None:
-    if not isinstance(value, str):
-        return None
-    return mapping.get(value.lower())
-
-
 class PetwalkClient:
     """Talks to one door over the local API."""
 
@@ -78,6 +75,7 @@ class PetwalkClient:
         self._session = session
         self._base_url = URL.build(scheme="http", host=host, port=port)
         self._timeout = ClientTimeout(total=REQUEST_TIMEOUT)
+        self._reported_unknown: set[tuple[str, str]] = set()
 
     @property
     def base_url(self) -> str:
@@ -88,15 +86,43 @@ class PetwalkClient:
         """Read states and modes."""
         states = await self._get("states")
         modes = await self._get("modes")
+        parsed_modes: dict[str, bool] = {}
+        door_open = self._parse_flag("door", states.get("door"), _DOOR_VALUES)
+        system_on = self._parse_flag("system", states.get("system"), _SYSTEM_VALUES)
+        for mode in MODES:
+            value = modes.get(mode)
+            if isinstance(value, bool):
+                parsed_modes[mode] = value
+            elif value is not None:
+                self._report_unknown(mode, value)
         return PetwalkData(
-            door_open=_parse_flag(states.get("door"), _DOOR_VALUES),
-            system_on=_parse_flag(states.get("system"), _SYSTEM_VALUES),
-            modes={
-                mode: value
-                for mode in MODES
-                if isinstance(value := modes.get(mode), bool)
-            },
+            door_open=door_open,
+            system_on=system_on,
+            modes=parsed_modes,
             raw={"states": states, "modes": modes},
+        )
+
+    def _parse_flag(
+        self, name: str, value: Any, mapping: Mapping[str, bool]
+    ) -> bool | None:
+        if value is None:
+            return None
+        if isinstance(value, str) and value.lower() in mapping:
+            return mapping[value.lower()]
+        self._report_unknown(name, value)
+        return None
+
+    def _report_unknown(self, name: str, value: Any) -> None:
+        """Warn once per field and value, so polling does not flood the log."""
+        key = (name, repr(value))
+        if key in self._reported_unknown:
+            return
+        self._reported_unknown.add(key)
+        _LOGGER.warning(
+            "The door reported %s=%r, which this integration does not know; "
+            "showing it as unknown. Please open an issue with your firmware version",
+            name,
+            value,
         )
 
     async def async_set_door(self, open_door: bool) -> None:

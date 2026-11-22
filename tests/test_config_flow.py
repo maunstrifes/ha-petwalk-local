@@ -93,6 +93,41 @@ async def test_user_flow_errors_and_recovers(
     assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
+async def test_host_is_normalised(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """Spaces and upper case must not create a second entry for one door."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    with patch(GET_DATA):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: " PetWALK.Example.COM ", CONF_PORT: PORT}
+        )
+
+    assert result["data"] == {CONF_HOST: "petwalk.example.com", CONF_PORT: PORT}
+
+
+@pytest.mark.parametrize(
+    "host", ["http://192.0.2.10", "192.0.2.10/states", "a b", "192.0.2.10:8080"]
+)
+async def test_invalid_host_is_a_form_error(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock, host: str
+) -> None:
+    """A URL instead of a host name gets a helpful message, not a crash."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    with patch(GET_DATA) as get_data:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: host, CONF_PORT: PORT}
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_HOST: "invalid_host"}
+    get_data.assert_not_awaited()
+
+
 async def test_same_door_cannot_be_added_twice(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_setup_entry: AsyncMock
 ) -> None:
@@ -103,7 +138,7 @@ async def test_same_door_cannot_be_added_twice(
     )
     with patch(GET_DATA) as get_data:
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {CONF_HOST: HOST, CONF_PORT: PORT}
+            result["flow_id"], {CONF_HOST: f" {HOST.upper()} ", CONF_PORT: PORT}
         )
 
     assert result["type"] is FlowResultType.ABORT
@@ -162,6 +197,23 @@ async def test_reconfigure_rejects_address_of_another_entry(
 
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
+
+
+async def test_reconfigure_rejects_invalid_host(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_setup_entry: AsyncMock
+) -> None:
+    """Reconfigure checks the host the same way as the first setup."""
+    config_entry.add_to_hass(hass)
+    result = await config_entry.start_reconfigure_flow(hass)
+
+    with patch(GET_DATA) as get_data:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "http://192.0.2.20", CONF_PORT: PORT}
+        )
+
+    assert result["errors"] == {CONF_HOST: "invalid_host"}
+    get_data.assert_not_awaited()
+    assert config_entry.data == {CONF_HOST: HOST, CONF_PORT: PORT}
 
 
 async def test_reconfigure_error_keeps_old_data(

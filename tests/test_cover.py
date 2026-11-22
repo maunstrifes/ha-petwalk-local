@@ -143,16 +143,16 @@ async def test_new_command_replaces_pending_transition(
     door: FakeDoor,
     freezer: FrozenDateTimeFactory,
 ) -> None:
-    """Close right after open: the earlier timeout must not end the new one."""
+    """A repeated command restarts the wait instead of inheriting the old timeout."""
     await _call(hass, SERVICE_OPEN_COVER)
-    door.states["door"] = "open"
-    door.serve()
     await _advance(hass, freezer, timedelta(seconds=10))
+    assert get_state(hass, DOOR).state == CoverState.OPENING
 
-    await _call(hass, SERVICE_CLOSE_COVER)
+    await _call(hass, SERVICE_OPEN_COVER)
+    # 16 s after the first command: its timer would have fired by now.
     await _advance(hass, freezer, timedelta(seconds=6))
 
-    assert get_state(hass, DOOR).state == CoverState.CLOSING
+    assert get_state(hass, DOOR).state == CoverState.OPENING
 
 
 async def test_failed_command_raises_and_keeps_state(

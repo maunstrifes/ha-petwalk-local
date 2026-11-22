@@ -47,6 +47,30 @@ def test_documentation_and_public_addresses_pass(host: str) -> None:
 def test_network_notation_is_not_a_host() -> None:
     """A CIDR range describes a rule, not somebody's device."""
     assert check_privacy.find_problems(f"ranges: {_ip(10, 0, 0, 0)}/8") == []
+    assert check_privacy.find_problems(f"lan {_ip(192, 168, 0, 0)}/16.") == []
+
+
+def test_host_with_prefix_length_is_reported() -> None:
+    """An interface address like a.b.c.d/24 still names a device."""
+    host = _ip(192, 168, 1, 20)
+    assert check_privacy.find_problems(f"address {host}/24") == [
+        (1, f"private IPv4 address {host}")
+    ]
+
+
+def test_address_at_the_end_of_a_sentence_is_reported() -> None:
+    """A trailing full stop must not hide an address."""
+    assert check_privacy.find_problems(f"The door is at {LEAK}.") == [
+        (1, f"private IPv4 address {LEAK}")
+    ]
+
+
+def test_zero_padded_address_is_reported() -> None:
+    """Leading zeros are another spelling of the same address."""
+    padded = "192." + "168.001.020"
+    assert check_privacy.find_problems(padded) == [
+        (1, f"private IPv4 address {padded}")
+    ]
 
 
 def test_version_numbers_are_not_addresses() -> None:
@@ -57,7 +81,7 @@ def test_version_numbers_are_not_addresses() -> None:
 @pytest.mark.parametrize(
     "address",
     [
-        "someone" + "@company.example.at",
+        "someone" + "@company.example.co",
         "first.last" + "@gmail.com",
     ],
 )
@@ -108,7 +132,7 @@ def _make_repo(tmp_path: Path, email: str) -> Path:
 
 def test_commit_with_private_email_fails(tmp_path: Path) -> None:
     """A commit identity outside the allow list would be public forever."""
-    address = "me" + "@company.example.at"
+    address = "me" + "@company.example.co"
     repo = _make_repo(tmp_path, address)
 
     problems = check_privacy.check_repository(repo)
@@ -150,6 +174,41 @@ def test_commit_messages_are_scanned(tmp_path: Path) -> None:
     assert check_privacy.check_repository(repo) == [
         f"git: commit message: private IPv4 address {LEAK}"
     ]
+
+
+def test_removed_file_content_in_history_is_reported(tmp_path: Path) -> None:
+    """Deleting a leak in a later commit does not take it out of the history."""
+    repo = _make_repo(tmp_path, NOREPLY)
+    (repo / "notes.txt").write_text(f"door at {LEAK}\n", encoding="utf-8")
+    _git(repo, "add", "notes.txt")
+    _git(repo, "commit", "-q", "-m", "add notes")
+    _git(repo, "rm", "-q", "notes.txt")
+    _git(repo, "commit", "-q", "-m", "remove notes")
+
+    assert check_privacy.check_repository(repo) == [
+        f"git: file content in history: private IPv4 address {LEAK}"
+    ]
+
+
+def test_repository_without_commits_is_checked(tmp_path: Path) -> None:
+    """Before the first commit, files and configured identity are still checked."""
+    repo = tmp_path / "fresh"
+    repo.mkdir()
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "config", "user.email", NOREPLY)
+    (repo / "notes.txt").write_text(f"door at {LEAK}\n", encoding="utf-8")
+
+    assert check_privacy.check_repository(repo) == [
+        f"notes.txt:1: private IPv4 address {LEAK}"
+    ]
+
+
+def test_failing_git_fails_the_check(tmp_path: Path) -> None:
+    """Outside a repository nothing can be checked, which must not pass."""
+    with pytest.raises(check_privacy.GitError):
+        check_privacy.check_repository(tmp_path)
+
+    assert check_privacy.main([str(tmp_path)]) == 2
 
 
 def test_main_returns_nonzero_on_findings(

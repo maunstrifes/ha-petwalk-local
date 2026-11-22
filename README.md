@@ -172,9 +172,14 @@ moves to a newer Home Assistant.
 This integration is developed against real doors in real homes.
 `scripts/check_privacy.py` runs in CI and fails on:
 
-- private IPv4 addresses (`10.x`, `172.16–31.x`, `192.168.x`) in any file or commit message,
-- e-mail addresses other than GitHub noreply addresses and `example.com`-style domains,
-- commits whose author or committer e-mail is not a noreply address.
+- private IPv4 addresses (`10.x`, `172.16–31.x`, `192.168.x`) and
+- e-mail addresses other than GitHub noreply addresses and `example.com`-style domains
+
+in the working tree (including files not committed yet), in every line ever added
+to the history, and in commit messages. It also fails on commits whose author or
+committer e-mail is not a noreply address, and when git itself fails, so that an
+unchecked repository never looks clean. Run it locally with
+`python scripts/check_privacy.py`.
 
 Use the documentation ranges (`192.0.2.x`, `198.51.100.x`, `203.0.113.x`) in tests
 and docs, and commit with your

@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import voluptuous as vol
+from yarl import URL
 
 from .api import (
     PetwalkAuthError,
@@ -41,10 +42,12 @@ class PetwalkConfigFlow(ConfigFlow, domain=DOMAIN):
         """Ask for the door's address and check that the API answers."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            self._async_abort_entries_match(
-                {CONF_HOST: user_input[CONF_HOST], CONF_PORT: user_input[CONF_PORT]}
-            )
-            errors = await self._async_validate(user_input)
+            user_input = _normalise(user_input)
+            if not (errors := _check_host(user_input[CONF_HOST])):
+                self._async_abort_entries_match(
+                    {CONF_HOST: user_input[CONF_HOST], CONF_PORT: user_input[CONF_PORT]}
+                )
+                errors = await self._async_validate(user_input)
             if not errors:
                 return self.async_create_entry(title="petWALK", data=user_input)
         return self.async_show_form(
@@ -60,13 +63,16 @@ class PetwalkConfigFlow(ConfigFlow, domain=DOMAIN):
         entry = self._get_reconfigure_entry()
         errors: dict[str, str] = {}
         if user_input is not None:
-            for other in self._async_current_entries(include_ignore=False):
-                if other.entry_id != entry.entry_id and (
-                    other.data.get(CONF_HOST),
-                    other.data.get(CONF_PORT),
-                ) == (user_input[CONF_HOST], user_input[CONF_PORT]):
-                    return self.async_abort(reason="already_configured")
-            errors = await self._async_validate(user_input)
+            user_input = _normalise(user_input)
+            address = (user_input[CONF_HOST], user_input[CONF_PORT])
+            if any(
+                other.entry_id != entry.entry_id
+                and (other.data.get(CONF_HOST), other.data.get(CONF_PORT)) == address
+                for other in self._async_current_entries(include_ignore=False)
+            ):
+                return self.async_abort(reason="already_configured")
+            if not (errors := _check_host(user_input[CONF_HOST])):
+                errors = await self._async_validate(user_input)
             if not errors:
                 return self.async_update_reload_and_abort(
                     entry, data_updates=user_input
@@ -80,12 +86,12 @@ class PetwalkConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def _async_validate(self, user_input: dict[str, Any]) -> dict[str, str]:
-        client = PetwalkClient(
-            async_get_clientsession(self.hass),
-            user_input[CONF_HOST],
-            user_input[CONF_PORT],
-        )
         try:
+            client = PetwalkClient(
+                async_get_clientsession(self.hass),
+                user_input[CONF_HOST],
+                user_input[CONF_PORT],
+            )
             await client.async_get_data()
         except PetwalkConnectionError:
             return {"base": "cannot_connect"}
@@ -97,3 +103,19 @@ class PetwalkConfigFlow(ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected error while checking the door")
             return {"base": "unknown"}
         return {}
+
+
+def _normalise(user_input: dict[str, Any]) -> dict[str, Any]:
+    """Host names are case-insensitive; stray spaces come from copy and paste."""
+    return {**user_input, CONF_HOST: str(user_input[CONF_HOST]).strip().lower()}
+
+
+def _check_host(host: str) -> dict[str, str]:
+    """Reject URLs and paths, which users often paste instead of a host."""
+    if not host or any(char in host for char in "/@?# \t"):
+        return {CONF_HOST: "invalid_host"}
+    try:
+        URL.build(scheme="http", host=host)
+    except ValueError:
+        return {CONF_HOST: "invalid_host"}
+    return {}

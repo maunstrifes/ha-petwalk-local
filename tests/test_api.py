@@ -84,6 +84,26 @@ async def test_unknown_or_missing_states_become_none(
     assert (data.door_open, data.system_on) == (door_open, system_on)
 
 
+async def test_unknown_values_are_logged_once(
+    client: PetwalkClient,
+    aioclient_mock: AiohttpClientMocker,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A new firmware value is worth one warning, not one every 5 seconds."""
+    aioclient_mock.get(f"{BASE_URL}/states", json={"door": "ajar", "system": "on"})
+    aioclient_mock.get(f"{BASE_URL}/modes", json={**MODES_OK, "rfid": "maybe"})
+
+    await client.async_get_data()
+    await client.async_get_data()
+
+    warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    assert len(warnings) == 2
+    assert "door" in warnings[0]
+    assert "'ajar'" in warnings[0]
+    assert "rfid" in warnings[1]
+    assert "'maybe'" in warnings[1]
+
+
 async def test_modes_that_are_missing_or_not_boolean_are_left_out(
     client: PetwalkClient, aioclient_mock: AiohttpClientMocker
 ) -> None:
