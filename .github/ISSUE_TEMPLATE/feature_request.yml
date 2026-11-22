@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest an improvement.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This integration only uses the official petWALK.control local API. Features
+        the API does not offer (for example which pet passed the door) are out of
+        scope; see the README for the reasons.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to do?
+    validations:
+      required: true
