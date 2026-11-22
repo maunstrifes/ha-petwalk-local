@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import voluptuous as vol
 from yarl import URL
+
+if TYPE_CHECKING:
+    # Since 2026.10 Home Assistant validates with probatio and points `voluptuous`
+    # at it when it starts, so vol.Schema below is a probatio Schema at runtime.
+    # Type checkers still see the real voluptuous package and need the hint.
+    from probatio import Schema as FormSchema
 
 from .api import (
     PetwalkAuthError,
@@ -21,13 +27,16 @@ from .const import DEFAULT_PORT, DOMAIN
 
 _LOGGER = logging.getLogger(__package__)
 
-SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_HOST): str,
-        vol.Required(CONF_PORT, default=DEFAULT_PORT): vol.All(
-            vol.Coerce(int), vol.Range(min=1, max=65535)
-        ),
-    }
+SCHEMA = cast(
+    "FormSchema",
+    vol.Schema(
+        {
+            vol.Required(CONF_HOST): str,
+            vol.Required(CONF_PORT, default=DEFAULT_PORT): vol.All(
+                vol.Coerce(int), vol.Range(min=1, max=65535)
+            ),
+        }
+    ),
 )
 
 

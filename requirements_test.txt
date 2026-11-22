@@ -1,4 +1,4 @@
-# Pins Home Assistant 2026.8.2 together with its matching test harness.
+# Pins Home Assistant 2026.10.4 together with its matching test harness.
 # Raise both together: each harness release pins exactly one Home Assistant version.
 pytest-homeassistant-custom-component==0.13.375
 ruff==0.17.6
