@@ -1,6 +1,5 @@
 # petWALK Local for Home Assistant
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
 [![CI](https://github.com/maunstrifes/ha-petwalk-local/actions/workflows/ci.yml/badge.svg)](https://github.com/maunstrifes/ha-petwalk-local/actions/workflows/ci.yml)
 [![Validate](https://github.com/maunstrifes/ha-petwalk-local/actions/workflows/validate.yml/badge.svg)](https://github.com/maunstrifes/ha-petwalk-local/actions/workflows/validate.yml)
 
@@ -58,7 +57,16 @@ keeps the API.
 
 ## Installation
 
-### HACS (recommended)
+### Marketplace (Home Assistant 2026.11 and newer)
+
+Since 2026.11, Home Assistant has a built-in Marketplace that replaces HACS.
+
+1. **Settings → Marketplace**, then **Add from link** in the upper right.
+2. Enter `maunstrifes/ha-petwalk-local` and select **Add**. The Marketplace asks you
+   to connect a GitHub account if you have not done so yet.
+3. Open **petWALK Local** in the list, install it and restart Home Assistant.
+
+### HACS (Home Assistant 2026.8 to 2026.10)
 
 1. In HACS, open the menu (⋮) → **Custom repositories**.
 2. Add `https://github.com/maunstrifes/ha-petwalk-local` with type **Integration**.
